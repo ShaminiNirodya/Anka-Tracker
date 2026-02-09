@@ -1,0 +1,29 @@
+# Defaults
+node_modules
+.DS_Store
+dist
+dist-ssr
+*.local
+.npmrc
+
+# Editor
+.vscode
+.idea
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# NestJS
+server/dist
+
+# Vite
+client/dist
+client/coverage
