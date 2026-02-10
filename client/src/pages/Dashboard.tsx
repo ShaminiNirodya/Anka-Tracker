@@ -3,6 +3,7 @@ import api from '../services/api';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { Clock, CheckCircle, ListTodo, TrendingUp, Zap } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { format } from 'date-fns';
 import type { Task } from '../types';
 
 function formatDuration(totalSeconds: number): string {
@@ -67,9 +68,17 @@ export default function Dashboard() {
     return (
         <div className="space-y-8 animate-fade-in">
             {/* Header */}
-            <div>
-                <h1 className="text-3xl font-bold text-white">Dashboard</h1>
-                <p className="text-gray-400 mt-1">Your productivity at a glance</p>
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div>
+                    <h1 className="text-3xl font-bold text-white tracking-tight">Dashboard</h1>
+                    <p className="text-gray-400 mt-1">Your productivity at a glance</p>
+                </div>
+                {stats && (
+                    <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-gray-500 bg-white/5 px-3 py-1.5 rounded-full border border-white/5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        Live Data · Updated {format(new Date(), 'h:mm a')}
+                    </div>
+                )}
             </div>
 
             {/* Stats Grid */}
