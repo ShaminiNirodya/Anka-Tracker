@@ -8,6 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { cn } from '../lib/utils';
 import { format } from 'date-fns';
+import confetti from 'canvas-confetti';
 
 const CATEGORIES = ['Work', 'Personal', 'Study', 'Health', 'Finance', 'Shopping', 'Other'] as const;
 
@@ -37,6 +38,7 @@ export default function TasksPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingTask, setEditingTask] = useState<Task | null>(null);
     const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
+    const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
     const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
 
     // Filter & Sort State
@@ -53,6 +55,24 @@ export default function TasksPage() {
             return () => clearTimeout(timer);
         }
     }, [toast]);
+
+    // Keyboard Shortcuts
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // ALT + N for New Task
+            if (e.altKey && e.key.toLowerCase() === 'n') {
+                e.preventDefault();
+                handleCreate();
+            }
+            // CMD/CTRL + / to Focus Search
+            if ((e.metaKey || e.ctrlKey) && e.key === '/') {
+                e.preventDefault();
+                document.getElementById('task-search')?.focus();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
 
     const showToast = (message: string, type: 'success' | 'error' = 'success') => setToast({ message, type });
 
@@ -97,9 +117,7 @@ export default function TasksPage() {
     });
 
     const handleDelete = (id: string) => {
-        if (window.confirm('Are you sure you want to delete this task? This action cannot be undone.')) {
-            deleteTaskMutation.mutate(id);
-        }
+        setConfirmDeleteId(id);
     };
 
     const startTimerMutation = useMutation({
@@ -123,9 +141,19 @@ export default function TasksPage() {
 
     const updateStatusMutation = useMutation({
         mutationFn: async ({ id, status }: { id: string; status: string }) => { await api.patch(`/tasks/${id}`, { status }); },
-        onSuccess: () => {
+        onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: ['tasks'] });
-            showToast('Status updated');
+            if (variables.status === 'DONE') {
+                confetti({
+                    particleCount: 150,
+                    spread: 70,
+                    origin: { y: 0.6 },
+                    colors: ['#34d399', '#10b981', '#059669', '#ffffff']
+                });
+                showToast('Fantastic! Task completed! 🎉');
+            } else {
+                showToast('Status updated');
+            }
         }
     });
 
@@ -157,8 +185,13 @@ export default function TasksPage() {
     const clearFilters = () => { setSearch(''); setStatusFilter(''); setPriorityFilter(''); setCategoryFilter(''); };
 
     if (isLoading) return (
-        <div className="flex items-center justify-center py-20">
-            <div className="w-8 h-8 border-2 border-brand-500/30 border-t-brand-500 rounded-full animate-spin" />
+        <div className="space-y-6">
+            <div className="flex justify-between items-center mb-8">
+                <div className="h-10 w-48 bg-white/5 rounded-xl animate-pulse" />
+                <div className="h-10 w-32 bg-white/5 rounded-xl animate-pulse" />
+            </div>
+            <div className="h-16 w-full bg-white/5 rounded-2xl animate-pulse mb-8" />
+            {[1, 2, 3, 4, 5].map(i => <TaskSkeleton key={i} />)}
         </div>
     );
 
@@ -200,7 +233,8 @@ export default function TasksPage() {
                 <div className="relative flex-1">
                     <Search className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-gray-500" size={16} />
                     <input
-                        type="text" placeholder="Search tasks..." value={search}
+                        id="task-search"
+                        type="text" placeholder="Search tasks... (Ctrl + /)" value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-surface-800/60 border border-white/5 text-gray-200 placeholder-gray-500 focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500/30 outline-none text-sm transition-all"
                     />
@@ -330,6 +364,45 @@ export default function TasksPage() {
 
             {/* Modal */}
             {isModalOpen && <TaskModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} task={editingTask} onToast={showToast} />}
+
+            {/* Custom Confirm Dialog */}
+            <ConfirmDialog
+                isOpen={!!confirmDeleteId}
+                onClose={() => setConfirmDeleteId(null)}
+                onConfirm={() => {
+                    if (confirmDeleteId) deleteTaskMutation.mutate(confirmDeleteId);
+                    setConfirmDeleteId(null);
+                }}
+                title="Delete Task"
+                message="Are you sure you want to delete this task? This action is permanent and cannot be undone."
+            />
+        </div>
+    );
+}
+
+/* ──────────────── Custom Confirm Dialog ──────────────── */
+
+function ConfirmDialog({ isOpen, onClose, onConfirm, title, message }: { isOpen: boolean; onClose: () => void; onConfirm: () => void; title: string; message: string }) {
+    if (!isOpen) return null;
+    return (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[70] p-4 animate-fade-in" onClick={onClose}>
+            <div className="glass-card rounded-3xl shadow-glow-lg w-full max-w-sm overflow-hidden animate-scale-in border-white/10" onClick={(e) => e.stopPropagation()}>
+                <div className="p-6 text-center">
+                    <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-4 border border-red-500/20">
+                        <AlertCircle className="text-red-400" size={32} />
+                    </div>
+                    <h3 className="text-xl font-bold text-white mb-2">{title}</h3>
+                    <p className="text-sm text-gray-400 leading-relaxed">{message}</p>
+                </div>
+                <div className="flex border-t border-white/5">
+                    <button onClick={onClose} className="flex-1 px-6 py-4 text-sm font-semibold text-gray-400 hover:bg-white/5 transition-all border-r border-white/5">
+                        Cancel
+                    </button>
+                    <button onClick={onConfirm} className="flex-1 px-6 py-4 text-sm font-bold text-red-400 hover:bg-red-500/10 transition-all">
+                        Delete
+                    </button>
+                </div>
+            </div>
         </div>
     );
 }
@@ -594,6 +667,29 @@ function StopwatchBanner({ startTime, taskTitle, onStop }: { startTime: string; 
                         Stop Timer
                     </button>
                 </div>
+            </div>
+        </div>
+    );
+}
+/* ──────────────── Skeleton Loader ──────────────── */
+
+function TaskSkeleton() {
+    return (
+        <div className="glass-card rounded-2xl p-4 flex items-center justify-between animate-pulse border-white/5">
+            <div className="flex items-center gap-4 flex-1">
+                <div className="w-6 h-6 rounded-full bg-white/5" />
+                <div className="space-y-2 flex-1 max-w-md">
+                    <div className="h-4 w-1/3 bg-white/5 rounded" />
+                    <div className="h-3 w-2/3 bg-white/5 rounded" />
+                    <div className="flex gap-2">
+                        <div className="h-5 w-16 bg-white/5 rounded-lg" />
+                        <div className="h-5 w-16 bg-white/5 rounded-lg" />
+                    </div>
+                </div>
+            </div>
+            <div className="flex gap-3">
+                <div className="w-20 h-8 bg-white/5 rounded-lg" />
+                <div className="w-8 h-8 bg-white/5 rounded-lg" />
             </div>
         </div>
     );

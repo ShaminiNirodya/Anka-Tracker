@@ -2,6 +2,10 @@ import { Controller, Post, Body, Get, UseGuards, Request, Param } from '@nestjs/
 import { TimeLogsService } from './time-logs.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+
+@ApiTags('Time Tracking')
+@ApiBearerAuth()
 @Controller('time-logs')
 @UseGuards(JwtAuthGuard)
 export class TimeLogsController {
