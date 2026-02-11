@@ -3,12 +3,16 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, IsNull } from 'typeorm';
 import { TimeLog } from './time-log.entity';
 import { User } from '../users/user.entity';
+import { Task } from '../tasks/task.entity';
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
 
 @Injectable()
 export class TimeLogsService {
     constructor(
         @InjectRepository(TimeLog)
         private timeLogsRepository: Repository<TimeLog>,
+        @InjectRepository(Task)
+        private tasksRepository: Repository<Task>,
     ) { }
 
     async getActiveTimer(user: User): Promise<TimeLog | null> {
@@ -19,6 +23,16 @@ export class TimeLogsService {
     }
 
     async startTimer(taskId: string, user: User): Promise<TimeLog> {
+        const task = await this.tasksRepository.findOne({ where: { id: taskId, userId: user.id } });
+
+        if (!task) {
+            throw new NotFoundException('Task not found');
+        }
+
+        if (task.status === 'DONE') {
+            throw new ForbiddenException('Cannot start timer for completed tasks');
+        }
+
         const active = await this.getActiveTimer(user);
 
         if (active) {

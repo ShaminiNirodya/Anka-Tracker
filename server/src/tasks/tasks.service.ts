@@ -40,7 +40,7 @@ export class TasksService {
         }
 
         if (search) {
-            qb.andWhere('(task.title LIKE :search OR task.description LIKE :search)', { search: `%${search}%` });
+            qb.andWhere('(task.title ILIKE :search OR task.description ILIKE :search)', { search: `%${search}%` });
         }
 
         const sortField = sortBy || 'createdAt';

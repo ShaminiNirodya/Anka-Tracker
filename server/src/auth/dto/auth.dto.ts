@@ -13,10 +13,11 @@ export class RegisterDto {
     @MinLength(6)
     password: string;
 
-    @ApiProperty({ example: 'John Doe' })
+    @ApiProperty({ example: 'johndoe' })
     @IsString()
     @IsNotEmpty()
-    name: string;
+    @MinLength(3)
+    username: string;
 }
 
 export class LoginDto {

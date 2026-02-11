@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import api from '../services/api';
+import { useThemeStore } from '../store/themeStore';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { Clock, CheckCircle, ListTodo, TrendingUp, Zap } from 'lucide-react';
 import { cn } from '../lib/utils';
@@ -17,6 +18,9 @@ function formatDuration(totalSeconds: number): string {
 }
 
 export default function Dashboard() {
+    const { theme } = useThemeStore();
+    const isDark = theme === 'dark';
+
     const { data: stats } = useQuery({
         queryKey: ['dashboard-stats'],
         queryFn: async () => {
@@ -54,7 +58,6 @@ export default function Dashboard() {
 
     const COLORS = ['#6366f1', '#a78bfa', '#818cf8', '#4f46e5', '#7c3aed'];
 
-    // We still use hours for the chart to keep a reasonable scale
     const timeData = [
         { name: 'Today', hours: Math.round(((stats?.totalSecondsToday || 0) / 3600) * 100) / 100 },
         { name: 'This Week', hours: Math.round(((stats?.totalSecondsWeek || 0) / 3600) * 100) / 100 },
@@ -66,15 +69,15 @@ export default function Dashboard() {
         : 0;
 
     return (
-        <div className="space-y-8 animate-fade-in">
+        <div className="space-y-8 animate-fade-in transition-colors duration-300">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-white tracking-tight">Dashboard</h1>
-                    <p className="text-gray-400 mt-1">Your productivity at a glance</p>
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">Dashboard</h1>
+                    <p className="text-gray-500 dark:text-gray-400 mt-1">Your productivity at a glance</p>
                 </div>
                 {stats && (
-                    <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-gray-500 bg-white/5 px-3 py-1.5 rounded-full border border-white/5">
+                    <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-gray-500 bg-gray-100 dark:bg-white/5 px-3 py-1.5 rounded-full border border-gray-200 dark:border-white/5 w-fit">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                         Live Data · Updated {format(new Date(), 'h:mm a')}
                     </div>
@@ -82,7 +85,7 @@ export default function Dashboard() {
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                 <StatCard
                     title="Total Tasks"
                     value={stats?.totalTasks || 0}
@@ -122,25 +125,25 @@ export default function Dashboard() {
                 {/* Time Distribution */}
                 <div className="glass-card rounded-2xl p-6">
                     <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-lg font-bold text-white">Time Distribution (Hours)</h2>
+                        <h2 className="text-lg font-bold text-gray-800 dark:text-white">Time Distribution (Hours)</h2>
                         <Zap size={18} className="text-brand-400" />
                     </div>
                     <div className="h-72">
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={timeData}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                                <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)"} />
                                 <XAxis dataKey="name" stroke="#6b7280" fontSize={12} tickLine={false} />
                                 <YAxis stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
                                 <Tooltip
                                     formatter={(value: number | undefined) => [formatDuration(Math.round((value || 0) * 3600)), 'Logged Time']}
                                     contentStyle={{
-                                        backgroundColor: 'rgba(15,23,42,0.9)',
-                                        borderColor: 'rgba(99,102,241,0.2)',
+                                        backgroundColor: isDark ? 'rgba(15,23,42,0.95)' : 'rgba(255,255,255,0.95)',
+                                        borderColor: isDark ? 'rgba(99,102,241,0.2)' : 'rgba(99,102,241,0.1)',
                                         borderRadius: '12px',
-                                        color: '#fff',
-                                        boxShadow: '0 0 20px rgba(99,102,241,0.1)'
+                                        color: isDark ? '#fff' : '#1e293b',
+                                        boxShadow: '0 10px 30px rgba(0,0,0,0.1)'
                                     }}
-                                    itemStyle={{ color: '#a5b4fc' }}
+                                    itemStyle={{ color: isDark ? '#a5b4fc' : '#4f46e5' }}
                                 />
                                 <Bar dataKey="hours" fill="url(#barGradient)" radius={[8, 8, 0, 0]} />
                                 <defs>
@@ -157,7 +160,7 @@ export default function Dashboard() {
                 {/* Tasks by Category */}
                 <div className="glass-card rounded-2xl p-6">
                     <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-lg font-bold text-white">Tasks by Category</h2>
+                        <h2 className="text-lg font-bold text-gray-800 dark:text-white">Tasks by Category</h2>
                     </div>
                     <div className="h-72 flex items-center justify-center">
                         {categoryData.length > 0 ? (
@@ -173,7 +176,7 @@ export default function Dashboard() {
                                         innerRadius={40}
                                         fill="#8884d8"
                                         dataKey="value"
-                                        stroke="rgba(15,23,42,1)"
+                                        stroke={isDark ? "#1e293b" : "#fff"}
                                         strokeWidth={2}
                                     >
                                         {categoryData.map((_entry, index) => (
@@ -182,10 +185,10 @@ export default function Dashboard() {
                                     </Pie>
                                     <Tooltip
                                         contentStyle={{
-                                            backgroundColor: 'rgba(15,23,42,0.9)',
-                                            borderColor: 'rgba(99,102,241,0.2)',
+                                            backgroundColor: isDark ? 'rgba(15,23,42,0.95)' : 'rgba(255,255,255,0.95)',
+                                            borderColor: isDark ? 'rgba(99,102,241,0.2)' : 'rgba(99,102,241,0.1)',
                                             borderRadius: '12px',
-                                            color: '#fff',
+                                            color: isDark ? '#fff' : '#1e293b',
                                         }}
                                     />
                                     <Legend
@@ -195,7 +198,7 @@ export default function Dashboard() {
                             </ResponsiveContainer>
                         ) : (
                             <div className="text-gray-500 text-center">
-                                <ListTodo size={40} className="mx-auto mb-3 text-gray-600" />
+                                <ListTodo size={40} className="mx-auto mb-3 text-gray-400 dark:text-gray-600" />
                                 <p className="text-sm">No categorised tasks yet</p>
                             </div>
                         )}
@@ -206,7 +209,7 @@ export default function Dashboard() {
             {/* Priority Breakdown */}
             {priorityData.length > 0 && (
                 <div className="glass-card rounded-2xl p-6">
-                    <h2 className="text-lg font-bold text-white mb-6">Priority Breakdown</h2>
+                    <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-6">Priority Breakdown</h2>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                         {priorityData.map((item) => {
                             const total = tasks?.length || 1;
@@ -214,10 +217,10 @@ export default function Dashboard() {
                             return (
                                 <div key={item.name}>
                                     <div className="flex items-center justify-between mb-2">
-                                        <span className="text-sm font-medium text-gray-300">{item.name}</span>
+                                        <span className="text-sm font-medium text-gray-600 dark:text-gray-300">{item.name}</span>
                                         <span className="text-xs text-gray-500">{item.value} tasks</span>
                                     </div>
-                                    <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                                    <div className="h-2 bg-gray-200 dark:bg-white/5 rounded-full overflow-hidden">
                                         <div
                                             className="h-full rounded-full transition-all duration-1000 ease-out"
                                             style={{ width: `${pct}%`, backgroundColor: item.color }}
@@ -251,14 +254,15 @@ function StatCard({ title, value, icon: Icon, gradient, iconBg, delay }: StatCar
         >
             <div className="flex items-start justify-between">
                 <div>
-                    <p className="text-sm text-gray-400 font-medium">{title}</p>
-                    <p className="text-3xl font-bold text-white mt-2">{value}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">{title}</p>
+                    <p className="text-3xl font-bold text-gray-800 dark:text-white mt-2 tabular-nums">{value}</p>
                 </div>
                 <div className={cn("p-3 rounded-xl", iconBg)}>
-                    <Icon size={22} className={cn("bg-gradient-to-r bg-clip-text", gradient)} style={{ color: 'white' }} />
+                    <Icon size={22} className={cn("text-white")} />
                 </div>
             </div>
-            <div className={cn("h-1 rounded-full mt-4 bg-gradient-to-r opacity-40 group-hover:opacity-70 transition-opacity", gradient)} />
+            <div className={cn("h-1 rounded-full mt-4 bg-gradient-to-r opacity-30 group-hover:opacity-70 transition-opacity", gradient)} />
         </div>
     );
 }
+

@@ -4,6 +4,28 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
+:root {
+  --bg-main: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-surface-alt: #f1f5f9;
+  --text-main: #1e293b;
+  --text-muted: #64748b;
+  --border-color: rgba(99, 102, 241, 0.1);
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-bg-hover: rgba(255, 255, 255, 0.85);
+}
+
+.dark {
+  --bg-main: #0f172a;
+  --bg-surface: #1e293b;
+  --bg-surface-alt: #0f172a;
+  --text-main: #f1f5f9;
+  --text-muted: #94a3b8;
+  --border-color: rgba(99, 102, 241, 0.15);
+  --glass-bg: rgba(30, 41, 59, 0.4);
+  --glass-bg-hover: rgba(30, 41, 59, 0.6);
+}
+
 @layer base {
   * {
     margin: 0;
@@ -19,9 +41,10 @@
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    background: #0f172a;
-    color: #e2e8f0;
+    background: var(--bg-main);
+    color: var(--text-main);
     min-height: 100vh;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
 
   #root {
@@ -50,28 +73,22 @@
 
 @layer components {
   .glass {
-    background: rgba(15, 23, 42, 0.6);
+    background: var(--glass-bg);
     backdrop-filter: blur(12px);
-    border: 1px solid rgba(99, 102, 241, 0.1);
-  }
-
-  .glass-light {
-    background: rgba(30, 41, 59, 0.5);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(99, 102, 241, 0.08);
+    border: 1px solid var(--border-color);
   }
 
   .glass-card {
-    background: rgba(30, 41, 59, 0.4);
+    background: var(--glass-bg);
     backdrop-filter: blur(16px);
-    border: 1px solid rgba(99, 102, 241, 0.1);
+    border: 1px solid var(--border-color);
     transition: all 0.3s ease;
   }
 
   .glass-card:hover {
-    background: rgba(30, 41, 59, 0.6);
-    border-color: rgba(99, 102, 241, 0.2);
-    box-shadow: 0 0 30px rgba(99, 102, 241, 0.08);
+    background: var(--glass-bg-hover);
+    border-color: rgba(99, 102, 241, 0.3);
+    box-shadow: 0 0 30px rgba(99, 102, 241, 0.1);
   }
 
   .gradient-text {
@@ -81,37 +98,23 @@
     background-clip: text;
   }
 
-  .gradient-border {
-    position: relative;
-  }
-
-  .gradient-border::before {
-    content: '';
-    position: absolute;
-    inset: -1px;
-    border-radius: inherit;
-    padding: 1px;
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(167, 139, 250, 0.3), rgba(99, 102, 241, 0.1));
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    pointer-events: none;
-  }
-
   .input-field {
-    @apply w-full px-4 py-2.5 rounded-xl bg-surface-800/50 border border-white/5 text-white placeholder-gray-500 focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500/40 outline-none transition-all duration-200;
+    @apply w-full px-4 py-2.5 rounded-xl border outline-none transition-all duration-200;
+    background: var(--bg-surface);
+    color: var(--text-main);
+    border-color: var(--border-color);
   }
 
-  .input-field:hover {
-    @apply border-white/10;
+  .input-field:focus {
+    @apply ring-2 ring-brand-500/40 border-brand-500/40;
   }
 
   .btn-primary {
-    @apply px-5 py-2.5 bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 text-white font-semibold rounded-xl shadow-lg shadow-brand-500/20 hover:shadow-brand-500/30 transition-all duration-200 active:scale-[0.98];
+    @apply px-5 py-2.5 bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 text-white font-semibold rounded-xl shadow-lg shadow-brand-500/20 hover:shadow-brand-500/30 transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .btn-ghost {
-    @apply px-4 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all duration-200;
+    @apply px-4 py-2 text-gray-500 dark:text-gray-400 hover:text-brand-600 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 rounded-xl transition-all duration-200;
   }
 }
 
